@@ -391,7 +391,21 @@ a {
 
 .marquee-row {
   margin: 14px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
+  scrollbar-width: none;
+  touch-action: pan-y;
+  user-select: none;
   will-change: transform;
+}
+
+.marquee-row::-webkit-scrollbar {
+  display: none;
+}
+
+.marquee-row.is-dragging {
+  cursor: grabbing;
 }
 
 .marquee-track {
@@ -406,10 +420,14 @@ a {
   border-radius: 28px;
   background: var(--glass);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.row-right { transform: translateX(-16%); }
-.row-left { transform: translateX(-6%); }
+.row-right,
+.row-left {
+  padding: 0 max(14px, calc((100vw - var(--max)) / 2));
+}
 
 .about-section,
 .projects-section,

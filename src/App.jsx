@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -168,15 +168,124 @@ function Hero() {
 function MarqueeWorks() {
   return (
     <section className="marquee-section" aria-label="作品滚动预览">
-      <div className="marquee-row row-right">
+      <MarqueeRow className="row-right" direction={1} initialOffset={0.16}>
         <ImageTrack />
         <ImageTrack hidden />
-      </div>
-      <div className="marquee-row row-left">
+      </MarqueeRow>
+      <MarqueeRow className="row-left" direction={-1} initialOffset={0.52}>
         <VideoTrack />
         <VideoTrack hidden />
-      </div>
+      </MarqueeRow>
     </section>
+  );
+}
+
+function MarqueeRow({ children, className = "", direction = 1, initialOffset = 0 }) {
+  const rowRef = useRef(null);
+  const stateRef = useRef({
+    isDown: false,
+    isInteracting: false,
+    startX: 0,
+    startScrollLeft: 0,
+    pauseTimer: 0,
+  });
+
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return undefined;
+
+    let frameId = 0;
+    let lastTime = performance.now();
+    const state = stateRef.current;
+
+    const getLoopWidth = () => row.scrollWidth / 2;
+    const normalizeScroll = () => {
+      const loopWidth = getLoopWidth();
+      if (!loopWidth) return;
+      if (row.scrollLeft >= loopWidth) row.scrollLeft -= loopWidth;
+      if (row.scrollLeft <= 0) row.scrollLeft += loopWidth;
+    };
+    const pauseAuto = () => {
+      state.isInteracting = true;
+      window.clearTimeout(state.pauseTimer);
+      state.pauseTimer = window.setTimeout(() => {
+        state.isInteracting = false;
+      }, 900);
+    };
+
+    const setInitialPosition = () => {
+      const loopWidth = getLoopWidth();
+      row.scrollLeft = Math.max(1, loopWidth * initialOffset);
+    };
+
+    const onWheel = (event) => {
+      if (Math.abs(event.deltaX) < 1 && Math.abs(event.deltaY) < 1) return;
+      event.preventDefault();
+      pauseAuto();
+      row.scrollLeft += event.deltaX + event.deltaY;
+      normalizeScroll();
+    };
+
+    const onPointerDown = (event) => {
+      state.isDown = true;
+      state.startX = event.clientX;
+      state.startScrollLeft = row.scrollLeft;
+      row.classList.add("is-dragging");
+      row.setPointerCapture(event.pointerId);
+      pauseAuto();
+    };
+
+    const onPointerMove = (event) => {
+      if (!state.isDown) return;
+      event.preventDefault();
+      row.scrollLeft = state.startScrollLeft - (event.clientX - state.startX);
+      normalizeScroll();
+    };
+
+    const stopDrag = (event) => {
+      if (!state.isDown) return;
+      state.isDown = false;
+      row.classList.remove("is-dragging");
+      if (row.hasPointerCapture(event.pointerId)) row.releasePointerCapture(event.pointerId);
+      pauseAuto();
+    };
+
+    const tick = (time) => {
+      const delta = time - lastTime;
+      lastTime = time;
+      if (!state.isInteracting && !state.isDown) {
+        row.scrollLeft += direction * (delta * 0.035);
+        normalizeScroll();
+      }
+      frameId = window.requestAnimationFrame(tick);
+    };
+
+    const initialFrame = window.requestAnimationFrame(setInitialPosition);
+    frameId = window.requestAnimationFrame(tick);
+    row.addEventListener("wheel", onWheel, { passive: false });
+    row.addEventListener("pointerdown", onPointerDown);
+    row.addEventListener("pointermove", onPointerMove);
+    row.addEventListener("pointerup", stopDrag);
+    row.addEventListener("pointercancel", stopDrag);
+    row.addEventListener("pointerleave", stopDrag);
+
+    return () => {
+      window.cancelAnimationFrame(initialFrame);
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(state.pauseTimer);
+      row.removeEventListener("wheel", onWheel);
+      row.removeEventListener("pointerdown", onPointerDown);
+      row.removeEventListener("pointermove", onPointerMove);
+      row.removeEventListener("pointerup", stopDrag);
+      row.removeEventListener("pointercancel", stopDrag);
+      row.removeEventListener("pointerleave", stopDrag);
+    };
+  }, [direction, initialOffset]);
+
+  return (
+    <div ref={rowRef} className={`marquee-row ${className}`} tabIndex={0}>
+      {children}
+    </div>
   );
 }
 
