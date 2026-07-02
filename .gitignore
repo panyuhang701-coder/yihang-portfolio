@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.tools/
+.env
+.env.local
+.vercel/
+.netlify/
+*.log
+.tmp-*.png
+assets/images/*.png
+assets/videos/ai-brand-film.mp4
+assets/videos/ai-concert.mp4
+assets/videos/ai-lipstick-ad.mp4
+assets/videos/ai-orbit-camera.mp4
+assets/videos/hero-background.mp4
+assets/videos/yihang-hero-profile.mp4
