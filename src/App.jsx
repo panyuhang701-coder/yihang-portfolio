@@ -22,6 +22,35 @@ const videoWorks = [
   "ai-brand-film-optimized.mp4",
 ];
 
+const aigcVideoWorks = [
+  "aigc-day-night-timelapse.mp4",
+  "aigc-camera-breakdown.mp4",
+  "aigc-product-film.mp4",
+  "aigc-wide-shot.mp4",
+  "aigc-spielberg-shot.mp4",
+  "aigc-hitchcock-zoom.mp4",
+  "aigc-fpv-camera.mp4",
+  "aigc-handheld-camera.mp4",
+  "aigc-gaokao-girl-relay.mp4",
+  "aigc-blend-change.mp4",
+  "aigc-label-change.mp4",
+  "aigc-light-change.mp4",
+  "aigc-retouch-change.mp4",
+  "aigc-remove-dog-food.mp4",
+  "aigc-white-tshirt-replace.mp4",
+  "aigc-world-cup-mv.mp4",
+];
+
+const topMarqueeWorks = [
+  ...imageWorks.map(([file, alt]) => ({ type: "image", file, alt })),
+  ...aigcVideoWorks.slice(0, 8).map((file) => ({ type: "video", file })),
+];
+
+const bottomMarqueeWorks = [
+  ...videoWorks.map((file) => ({ type: "video", file })),
+  ...aigcVideoWorks.slice(8).map((file) => ({ type: "video", file })),
+];
+
 const services = [
   ["01", "AI 视频内容全案", "从账号定位、选题、脚本、素材、剪辑到发布建议，帮助你把专业经验做成可传播的视频内容。"],
   ["02", "AIGC 创意视觉生产", "围绕生图、生视频和多模态工具，定制适合品牌与团队业务场景的视觉生产流程。"],
@@ -169,12 +198,12 @@ function MarqueeWorks() {
   return (
     <section className="marquee-section" aria-label="作品滚动预览">
       <MarqueeRow className="row-right" direction={1} initialOffset={0.16}>
-        <ImageTrack />
-        <ImageTrack hidden />
+        <MediaTrack items={topMarqueeWorks} />
+        <MediaTrack items={topMarqueeWorks} hidden />
       </MarqueeRow>
       <MarqueeRow className="row-left" direction={-1} initialOffset={0.52}>
-        <VideoTrack />
-        <VideoTrack hidden />
+        <MediaTrack items={bottomMarqueeWorks} />
+        <MediaTrack items={bottomMarqueeWorks} hidden />
       </MarqueeRow>
     </section>
   );
@@ -289,21 +318,13 @@ function MarqueeRow({ children, className = "", direction = 1, initialOffset = 0
   );
 }
 
-function ImageTrack({ hidden = false }) {
+function MediaTrack({ items, hidden = false }) {
   return (
     <div className="marquee-track" aria-hidden={hidden}>
-      {imageWorks.map(([file, alt]) => (
-        <img key={`${file}-${hidden}`} src={`/assets/images/${file}`} alt={hidden ? "" : alt} loading="lazy" decoding="async" />
-      ))}
-    </div>
-  );
-}
-
-function VideoTrack({ hidden = false }) {
-  return (
-    <div className="marquee-track" aria-hidden={hidden}>
-      {videoWorks.map((file) => (
-        <video key={`${file}-${hidden}`} data-src={`/assets/videos/${file}`} muted loop playsInline preload="none" />
+      {items.map((item) => (
+        item.type === "image"
+          ? <img key={`${item.file}-${hidden}`} src={`/assets/images/${item.file}`} alt={hidden ? "" : item.alt} loading="lazy" decoding="async" />
+          : <video key={`${item.file}-${hidden}`} data-src={`/assets/videos/${item.file}`} muted loop playsInline preload="none" />
       ))}
     </div>
   );
